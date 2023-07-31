@@ -127,6 +127,7 @@
                 }
                 Module.callMain([options, 'input.pld']);
                 populatefileoutput();
+                localStorage.setItem('input', input);
             });
 
             let fileselect = document.querySelector('#fileselect');
@@ -176,7 +177,11 @@
             });
 
             setTimeout(() => {
-                document.querySelector('#input').value = defaultfile;
+                if (localStorage.getItem('input')) {
+                    document.querySelector('#input').value = localStorage.getItem('input');
+                } else {
+                    document.querySelector('#input').value = defaultfile;
+                }
                 document.querySelector('#assemble').click();
             }, 100);
         });
