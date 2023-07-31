@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>GALasm web</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        #left-container,
+        #right-container {
+            width: 50%;
+            height: 100vh;
+            box-sizing: border-box;
+            padding: 10px;
+            background-color: #f8f8f8;
+        }
+
+        #left-container {
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #options {
+            width: 100%;
+        }
+
+        .optionlabel {
+            display: block;
+            font-family: monospace;
+        }
+
+        #fileoutput {
+            overflow: scroll;
+            max-height: 100%;
+        }
+
+        #output {
+            overflow: scroll;
+            max-height: 100%;
+            width: 100%;
+        }
+
+        textarea {
+            width: 100%;
+            height: 70%;
+            resize: none;
+            margin-bottom: 10px;
+        }
+
+        button {
+            width: 100%;
+        }
+
+        #right-container {
+            background-color: #e0e0e0;
+        }
+
+        #downloadbuttons {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        #right-container div button {
+            width: 50%;
+        }
+
+        select {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    </style>
+    <script>
+        let defaultfile = atob("R0FMMTZWOCAgICA7IDQtQml0LUNvdW50ZXIgIGZpcnN0IGxpbmUgOiB1c2VkIEdBTApDb3VudGVyICAgIDsgICAgICAgICAgICAgICAgc2Vjb25kIGxpbmU6IGFueSB0ZXh0IChtYXguIDggY2hhci4pCgoKQ2xvY2sgRDAgICAgRDEgICAgRDIgICAgRDMgICAgU2V0ICAgQ2xlYXIgTkMgICAgTkMgICBHTkQKL09FICAgTkMgICAgTkMgICAgTkMgICAgTkMgICAgUTMgICAgUTIgICAgUTEgICAgUTAgICBWQ0MKCgoKCgpRMC5SID0gICAvQ2xlYXIgKiAgU2V0ICogIEQwCiAgICAgICArIC9DbGVhciAqIC9TZXQgKiAvUTAKCgpRMS5SID0gICAvQ2xlYXIgKiAgU2V0ICogIEQxCiAgICAgICArIC9DbGVhciAqIC9TZXQgKiAvUTEgKiAgUTAKICAgICAgICsgL0NsZWFyICogL1NldCAqICBRMSAqIC9RMAoKClEyLlIgPSAgIC9DbGVhciAqICBTZXQgKiAgRDIKICAgICAgICsgL0NsZWFyICogL1NldCAqICBRMiAqIC9RMQogICAgICAgKyAvQ2xlYXIgKiAvU2V0ICogIFEyICogL1EwCiAgICAgICArIC9DbGVhciAqIC9TZXQgKiAvUTIgKiAgUTEgKiAgUTAKCgpRMy5SID0gICAvQ2xlYXIgKiAgU2V0ICogIEQzCiAgICAgICArIC9DbGVhciAqIC9TZXQgKiAgUTMgKiAvUTIKICAgICAgICsgL0NsZWFyICogL1NldCAqICBRMyAqIC9RMQogICAgICAgKyAvQ2xlYXIgKiAvU2V0ICogIFEzICogL1EwCiAgICAgICArIC9DbGVhciAqIC9TZXQgKiAvUTMgKiAgUTIgKiAgUTEgKiAgUTAKCgoKCgpERVNDUklQVElPTgoKdGhpcyBpcyBhIDQtQml0LUNvdW50ZXIKCnJlZ2lzdGVyZWQgb3V0cHV0cyBhcmUgc2lnbmVkIHdpdGggdGhlIHBvc3RmaXggLlIKCgogUGluICdTZXQnIEhJR0ggd2hpbGUgY2xvY2sgc2lnbmFsIChMT1ctSElHSCkgYXQgcGluICdDbG9jayc6CiAgICAgICAgbG9hZCBRMC1RMyB3aXRoIHN0YXRlIG9mIEQwLUQzCgogUGluICdDbGVhcicgSElHSCB3aGlsZSBjbG9jayBzaWduYWw6CiAgICAgICAgUTAtUTMgYXJlIGNsZWFyZWQKCiBDbG9jayBzaWduYWwgd2hpbGUgcGlucyAnU2V0JyBhbmQgJ0NsZWFyJyBhcmUgTE9XOgogICAgICAgIGluY3JlbWVudCBjb3VudGVyCgo=");
+        var Module = {
+            onRuntimeInitialized: () => {
+                let assembleButton = document.querySelector('#assemble');
+                assembleButton.disabled = false;
+                assembleButton.textContent = 'Assemble';
+            },
+            print: (text) => {
+                let outputContainer = document.querySelector('#output');
+                let element = document.createElement('div');
+                element.appendChild(document.createTextNode(text));
+                outputContainer.appendChild(element);
+            },
+            printErr: (text) => {
+                let outputContainer = document.querySelector('#output');
+                let element = document.createElement('div');
+                element.style.color = 'red';
+                element.appendChild(document.createTextNode(text));
+                outputContainer.appendChild(element);
+            },
+            noInitialRun: true,
+        }
+        function populatefileoutput() {
+            let fileoutput = document.querySelector('#fileoutput');
+            let fileselect = document.querySelector('#fileselect');
+            let filename = "input." + fileselect.options[fileselect.selectedIndex].value;
+            fileoutput.textContent = FS.readFile(filename, { encoding: 'utf8' });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            let assembleButton = document.querySelector('#assemble');
+            assembleButton.addEventListener('click', () => {
+                let input = document.querySelector('#input').value;
+                let fileoutput = document.querySelector('#fileoutput');
+                fileoutput.textContent = '';
+                let output = document.querySelector('#output');
+                output.textContent = '';
+                FS.writeFile('input.pld', input);
+                options = '-v';
+                if (document.querySelector('#securityfuse').checked) {
+                    options += 's';
+                }
+                if (document.querySelector('#restrictchecksum').checked) {
+                    options += 'a';
+                }
+                if (document.querySelector('#forcecrlf').checked) {
+                    options += 'w';
+                }
+                Module.callMain([options, 'input.pld']);
+                populatefileoutput();
+            });
+
+            let fileselect = document.querySelector('#fileselect');
+            fileselect.addEventListener('change', () => {
+                populatefileoutput();
+            });
+
+            function downloadfile(content, filename) {
+                let blob = new Blob([content], {type: 'text/plain'});
+                let link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(link.href);
+            }
+            let downloadbuttons = document.querySelector('#downloadjed');
+            downloadbuttons.addEventListener('click', () => {
+                try {
+                    let jedfile = FS.readFile('input.jed');
+                    downloadfile(jedfile, 'input.jed');
+                } catch {
+                    alert('No jed file to download, try assembling first');
+                    return;
+                }
+            });
+            let downloadall = document.querySelector('#downloadall');
+            downloadall.addEventListener('click', () => {
+                try {
+                    let jedfile = FS.readFile('input.jed');
+                    let chpfile = FS.readFile('input.chp');
+                    let fusfile = FS.readFile('input.fus');
+                    let pinfile = FS.readFile('input.pin');
+                    let zip = new JSZip();
+                    zip.file('input.jed', jedfile);
+                    zip.file('input.chp', chpfile);
+                    zip.file('input.fus', fusfile);
+                    zip.file('input.pin', pinfile);
+                    zip.generateAsync({type: 'blob'}).then((content) => {
+                        downloadfile(content, 'input.zip');
+                    });
+                } catch {
+                    alert('No files to download, try assembling first');
+                    return;
+                }
+            });
+
+            setTimeout(() => {
+                document.querySelector('#input').value = defaultfile;
+                document.querySelector('#assemble').click();
+            }, 100);
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="src/galasm.js"></script>
+</head>
+
+<body>
+    <div id="left-container">
+        <button id="assemble" disabled>Loading...</button>
+        <div id="options">
+            <!--
+             -s Enable security fuse
+             -a Restrict checksum to the fuse array only
+             -w Force <CR><LF> line endings for .jed file overriding platform default
+            -->
+            <div class="optionlabel">
+                <input type="checkbox" id="securityfuse" />
+                <label for="securityfuse">-s Enable security fuse</label>
+            </div>
+
+            <div class="optionlabel">
+                <input type="checkbox" id="restrictchecksum" />
+                <label for="restrictchecksum">-a Restrict checksum to the fuse array only</label>
+            </div>
+            <div class="optionlabel">
+                <input type="checkbox" id="forcecrlf" />
+                <label for="forcecrlf">-w Force &lt;CR&gt;
+                    &lt;LF&gt; line endings for .jed file overriding platform default</label>
+            </div>
+        </div>
+        <textarea id="input"></textarea>
+        <pre id="output"></pre>
+    </div>
+    <div id="right-container">
+        <div id="downloadbuttons">
+            <button id="downloadjed">Download JED</button>
+            <button id="downloadall">Download all as zip</button>
+        </div>
+        <select id="fileselect">
+            <option value="chp">chp</option>
+            <option value="fus">fus</option>
+            <option value="jed" selected>jed</option>
+            <option value="pin">pin</option>
+        </select>
+        <pre id="fileoutput"></pre>
+    </div>
+</body>
+
+</html>
